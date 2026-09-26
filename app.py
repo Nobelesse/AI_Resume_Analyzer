@@ -1,47 +1,108 @@
 import streamlit as st
 
+from database.db import initialize_database
+from modules.auth import register_user, login_user
+
+# Initialize DB
+initialize_database()
+
 st.set_page_config(
     page_title="AI Resume Analyzer",
     page_icon="📄",
     layout="wide"
 )
 
-# Sidebar
-st.sidebar.title("AI Resume Analyzer")
-st.sidebar.markdown("---")
+# Session
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
 
-menu = st.sidebar.radio(
-    "Navigation",
+if "user_name" not in st.session_state:
+    st.session_state.user_name = ""
+
+
+st.sidebar.title("📄 AI Resume Analyzer")
+
+page = st.sidebar.selectbox(
+    "Menu",
     [
-        "Home"
+        "Home",
+        "Register",
+        "Login"
     ]
 )
 
-# Home Page
-st.title("📄 AI Resume Analyzer")
+# Home
+if page == "Home":
 
-st.markdown("""
-### Welcome to AI Resume Analyzer
+    st.title("📄 AI Resume Analyzer")
 
-An NLP-Based Resume Analysis and Job Recommendation System.
+    st.info(
+        "NLP Based Resume Analysis & Job Recommendation System"
+    )
 
-### Features
+# Register
+elif page == "Register":
 
-✅ Resume Upload (PDF)
+    st.header("Create Account")
 
-✅ ATS Score Analysis
+    name = st.text_input("Full Name")
+    email = st.text_input("Email")
+    password = st.text_input(
+        "Password",
+        type="password"
+    )
 
-✅ Resume vs Job Matching
+    if st.button("Register"):
 
-✅ Missing Skills Detection
+        if register_user(
+                name,
+                email,
+                password):
 
-✅ Job Recommendations
+            st.success(
+                "Registration Successful"
+            )
 
-✅ Career Roadmap Generation
+        else:
+            st.error(
+                "Email already exists"
+            )
 
-✅ Admin Dashboard
+# Login
+elif page == "Login":
 
-✅ Downloadable PDF Reports
-""")
+    st.header("Login")
 
-st.info("Phase 1 Setup Completed Successfully.")
+    email = st.text_input("Email")
+    password = st.text_input(
+        "Password",
+        type="password"
+    )
+
+    if st.button("Login"):
+
+        user = login_user(
+            email,
+            password
+        )
+
+        if user:
+
+            st.session_state.logged_in = True
+            st.session_state.user_name = user[1]
+
+            st.success(
+                f"Welcome {user[1]}"
+            )
+
+        else:
+
+            st.error(
+                "Invalid Credentials"
+            )
+
+    if st.session_state.logged_in:
+
+        st.success(
+            f"Logged in as {st.session_state.user_name}"
+        )
