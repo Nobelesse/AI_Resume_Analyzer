@@ -1,5 +1,7 @@
 import streamlit as st
 
+from modules.history import get_user_resumes
+from modules.resume_upload import save_resume
 from database.db import initialize_database
 from modules.auth import register_user, login_user
 
@@ -28,6 +30,7 @@ page = st.sidebar.selectbox(
         "Home",
         "Register",
         "Login"
+        "Upload Resume"
     ]
 )
 
@@ -89,6 +92,7 @@ elif page == "Login":
         if user:
 
             st.session_state.logged_in = True
+            st.session_state.user_id = user[0]
             st.session_state.user_name = user[1]
 
             st.success(
@@ -106,3 +110,61 @@ elif page == "Login":
         st.success(
             f"Logged in as {st.session_state.user_name}"
         )
+
+# Upload Resume
+elif page == "Upload Resume":
+
+    st.header("📄 Upload Resume")
+
+    if not st.session_state.logged_in:
+
+        st.warning(
+            "Please login first."
+        )
+
+    else:
+
+        uploaded_file = st.file_uploader(
+            "Choose Resume",
+            type=["pdf"]
+        )
+
+        if uploaded_file:
+
+            max_size = 10 * 1024 * 1024
+
+            if uploaded_file.size > max_size:
+
+                st.error(
+                    "File exceeds 10 MB limit."
+                )
+
+            else:
+
+                st.success(
+                    f"Selected: {uploaded_file.name}"
+                )
+
+                if st.button(
+                        "Upload Resume"
+                ):
+
+                    save_resume(
+                        st.session_state.user_id,
+                        uploaded_file
+                    )
+
+                    st.success(
+                        "Resume uploaded successfully."
+                    )
+
+st.subheader("Upload History")
+
+history = get_user_resumes(
+    st.session_state.user_id
+)
+
+st.dataframe(
+    history,
+    use_container_width=True
+)
