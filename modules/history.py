@@ -10,10 +10,11 @@ def get_user_resumes(user_id):
 
     query = """
     SELECT
-    resume_name,
-    upload_date
+        resume_name,
+        upload_date
     FROM resumes
-    WHERE user_id=?
+    WHERE user_id = ?
+    ORDER BY id DESC
     """
 
     df = pd.read_sql_query(

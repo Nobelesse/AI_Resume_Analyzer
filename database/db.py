@@ -28,16 +28,16 @@ def initialize_database():
     # Resumes Table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS resumes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER,
-    resume_name TEXT,
-    file_path TEXT,
-    upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(user_id) REFERENCES users(id)
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        resume_name TEXT,
+        file_path TEXT,
+        upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id)
     )
     """)
 
-    # Analysis Table
+    # Analyses Table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS analyses (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,8 +53,7 @@ def initialize_database():
     conn.commit()
     conn.close()
 
-    print("Database Initialized Successfully")
-
 
 if __name__ == "__main__":
     initialize_database()
+    print("Database Initialized Successfully")

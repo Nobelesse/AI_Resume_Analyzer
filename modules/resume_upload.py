@@ -12,15 +12,17 @@ def save_resume(user_id, uploaded_file):
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    filename = f"{user_id}_{timestamp}_{uploaded_file.name}"
+    filename = (
+        f"{user_id}_{timestamp}_{uploaded_file.name}"
+    )
 
     filepath = os.path.join(
         UPLOAD_FOLDER,
         filename
     )
 
-    with open(filepath, "wb") as f:
-        f.write(uploaded_file.getbuffer())
+    with open(filepath, "wb") as file:
+        file.write(uploaded_file.getbuffer())
 
     conn = sqlite3.connect(
         "database/resume_analyzer.db"
@@ -30,11 +32,12 @@ def save_resume(user_id, uploaded_file):
 
     cursor.execute("""
     INSERT INTO resumes
-    (user_id,resume_name)
-    VALUES (?,?)
+    (user_id,resume_name,file_path)
+    VALUES (?,?,?)
     """, (
         user_id,
-        filename
+        filename,
+        filepath
     ))
 
     conn.commit()

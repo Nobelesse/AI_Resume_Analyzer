@@ -1,11 +1,10 @@
 import streamlit as st
 
-from modules.history import get_user_resumes
-from modules.resume_upload import save_resume
 from database.db import initialize_database
 from modules.auth import register_user, login_user
+from modules.resume_upload import save_resume
+from modules.history import get_user_resumes
 
-# Initialize DB
 initialize_database()
 
 st.set_page_config(
@@ -14,12 +13,15 @@ st.set_page_config(
     layout="wide"
 )
 
-# Session
+# Session State
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
 if "user_name" not in st.session_state:
     st.session_state.user_name = ""
+
+if "user_id" not in st.session_state:
+    st.session_state.user_id = None
 
 
 st.sidebar.title("📄 AI Resume Analyzer")
@@ -29,27 +31,47 @@ page = st.sidebar.selectbox(
     [
         "Home",
         "Register",
-        "Login"
+        "Login",
         "Upload Resume"
     ]
 )
 
-# Home
+# HOME
 if page == "Home":
 
     st.title("📄 AI Resume Analyzer")
 
-    st.info(
-        "NLP Based Resume Analysis & Job Recommendation System"
-    )
+    st.markdown("""
+    ### NLP-Based Resume Analysis & Career Recommendation System
 
-# Register
+    Welcome to AI Resume Analyzer.
+
+    Features:
+
+    ✅ Resume Upload
+
+    ✅ ATS Analysis
+
+    ✅ Resume Matching
+
+    ✅ Missing Skills Detection
+
+    ✅ Job Recommendations
+
+    ✅ Skill Gap Roadmap
+
+    ✅ Admin Dashboard
+    """)
+
+# REGISTER
 elif page == "Register":
 
-    st.header("Create Account")
+    st.header("📝 Create Account")
 
     name = st.text_input("Full Name")
+
     email = st.text_input("Email")
+
     password = st.text_input(
         "Password",
         type="password"
@@ -57,26 +79,28 @@ elif page == "Register":
 
     if st.button("Register"):
 
-        if register_user(
-                name,
-                email,
-                password):
+        success = register_user(
+            name,
+            email,
+            password
+        )
 
+        if success:
             st.success(
                 "Registration Successful"
             )
-
         else:
             st.error(
-                "Email already exists"
+                "Email already exists."
             )
 
-# Login
+# LOGIN
 elif page == "Login":
 
-    st.header("Login")
+    st.header("🔐 Login")
 
     email = st.text_input("Email")
+
     password = st.text_input(
         "Password",
         type="password"
@@ -100,18 +124,17 @@ elif page == "Login":
             )
 
         else:
-
             st.error(
-                "Invalid Credentials"
+                "Invalid Email or Password"
             )
 
     if st.session_state.logged_in:
 
         st.success(
-            f"Logged in as {st.session_state.user_name}"
+            f"Logged In As: {st.session_state.user_name}"
         )
 
-# Upload Resume
+# UPLOAD RESUME
 elif page == "Upload Resume":
 
     st.header("📄 Upload Resume")
@@ -125,7 +148,7 @@ elif page == "Upload Resume":
     else:
 
         uploaded_file = st.file_uploader(
-            "Choose Resume",
+            "Upload Resume (PDF Only)",
             type=["pdf"]
         )
 
@@ -142,11 +165,11 @@ elif page == "Upload Resume":
             else:
 
                 st.success(
-                    f"Selected: {uploaded_file.name}"
+                    f"Selected File: {uploaded_file.name}"
                 )
 
                 if st.button(
-                        "Upload Resume"
+                    "Upload Resume"
                 ):
 
                     save_resume(
@@ -158,13 +181,15 @@ elif page == "Upload Resume":
                         "Resume uploaded successfully."
                     )
 
-st.subheader("Upload History")
+        st.divider()
 
-history = get_user_resumes(
-    st.session_state.user_id
-)
+        st.subheader("📜 Upload History")
 
-st.dataframe(
-    history,
-    use_container_width=True
-)
+        history = get_user_resumes(
+            st.session_state.user_id
+        )
+
+        st.dataframe(
+            history,
+            use_container_width=True
+        )
