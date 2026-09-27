@@ -1,9 +1,27 @@
 import streamlit as st
 
 from database.db import initialize_database
-from modules.auth import register_user, login_user
-from modules.resume_upload import save_resume
-from modules.history import get_user_resumes
+
+from modules.auth import (
+    register_user,
+    login_user
+)
+
+from modules.resume_upload import (
+    save_resume
+)
+
+from modules.pdf_parser import (
+    extract_text_from_pdf
+)
+
+from modules.resume_parser import (
+    parse_resume
+)
+
+from admin.admin_dashboard import (
+    show_admin_dashboard
+)
 
 initialize_database()
 
@@ -14,6 +32,7 @@ st.set_page_config(
 )
 
 # Session State
+
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
@@ -23,54 +42,75 @@ if "user_name" not in st.session_state:
 if "user_id" not in st.session_state:
     st.session_state.user_id = None
 
+if "role" not in st.session_state:
+    st.session_state.role = "guest"
+
+# Sidebar
 
 st.sidebar.title("📄 AI Resume Analyzer")
 
-page = st.sidebar.selectbox(
-    "Menu",
-    [
-        "Home",
-        "Register",
-        "Login",
-        "Upload Resume"
-    ]
-)
+# ADMIN VIEW
+
+if st.session_state.role == "admin":
+
+    page = st.sidebar.selectbox(
+        "Admin Menu",
+        [
+            "Dashboard",
+            "Logout"
+        ]
+    )
+
+# USER VIEW
+
+elif st.session_state.logged_in:
+
+    page = st.sidebar.selectbox(
+        "User Menu",
+        [
+            "Home",
+            "Upload Resume",
+            "Logout"
+        ]
+    )
+
+# GUEST VIEW
+
+else:
+
+    page = st.sidebar.selectbox(
+        "Menu",
+        [
+            "Home",
+            "Register",
+            "Login",
+            "Admin Login"
+        ]
+    )
 
 # HOME
+
 if page == "Home":
 
     st.title("📄 AI Resume Analyzer")
 
-    st.markdown("""
-    ### NLP-Based Resume Analysis & Career Recommendation System
-
-    Welcome to AI Resume Analyzer.
-
-    Features:
-
-    ✅ Resume Upload
-
-    ✅ ATS Analysis
-
-    ✅ Resume Matching
-
-    ✅ Missing Skills Detection
-
-    ✅ Job Recommendations
-
-    ✅ Skill Gap Roadmap
-
-    ✅ Admin Dashboard
-    """)
+    st.info(
+        "NLP Based Resume Analysis System"
+    )
 
 # REGISTER
+
 elif page == "Register":
 
-    st.header("📝 Create Account")
+    st.title("Register")
 
-    name = st.text_input("Full Name")
+    name = st.text_input(
+        "Full Name"
+    )
 
-    email = st.text_input("Email")
+    email = st.text_input(
+        "Email"
+    )
 
     password = st.text_input(
         "Password",
@@ -86,20 +126,26 @@ elif page == "Register":
         )
 
         if success:
+
             st.success(
                 "Registration Successful"
             )
+
         else:
+
             st.error(
-                "Email already exists."
+                "Email Already Exists"
             )
 
-# LOGIN
+# USER LOGIN
+
 elif page == "Login":
 
-    st.header("🔐 Login")
+    st.title("User Login")
 
-    email = st.text_input("Email")
+    email = st.text_input(
+        "Email"
+    )
 
     password = st.text_input(
         "Password",
@@ -115,81 +161,141 @@ elif page == "Login":
 
         if user:
 
-            st.session_state.logged_in = True
-            st.session_state.user_id = user[0]
-            st.session_state.user_name = user[1]
+            if user[4] == "user":
 
-            st.success(
-                f"Welcome {user[1]}"
-            )
+                st.session_state.logged_in = True
+                st.session_state.user_id = user[0]
+                st.session_state.user_name = user[1]
+                st.session_state.role = "user"
 
-        else:
-            st.error(
-                "Invalid Email or Password"
-            )
-
-    if st.session_state.logged_in:
-
-        st.success(
-            f"Logged In As: {st.session_state.user_name}"
-        )
-
-# UPLOAD RESUME
-elif page == "Upload Resume":
-
-    st.header("📄 Upload Resume")
-
-    if not st.session_state.logged_in:
-
-        st.warning(
-            "Please login first."
-        )
-
-    else:
-
-        uploaded_file = st.file_uploader(
-            "Upload Resume (PDF Only)",
-            type=["pdf"]
-        )
-
-        if uploaded_file:
-
-            max_size = 10 * 1024 * 1024
-
-            if uploaded_file.size > max_size:
-
-                st.error(
-                    "File exceeds 10 MB limit."
-                )
+                st.rerun()
 
             else:
 
-                st.success(
-                    f"Selected File: {uploaded_file.name}"
+                st.error(
+                    "Use Admin Login"
                 )
 
-                if st.button(
-                    "Upload Resume"
-                ):
+# ADMIN LOGIN
 
-                    save_resume(
-                        st.session_state.user_id,
-                        uploaded_file
-                    )
+elif page == "Admin Login":
 
-                    st.success(
-                        "Resume uploaded successfully."
-                    )
+    st.title(
+        "🛡️ Admin Login"
+    )
 
-        st.divider()
+    email = st.text_input(
+        "Admin Email"
+    )
 
-        st.subheader("📜 Upload History")
+    password = st.text_input(
+        "Password",
+        type="password"
+    )
 
-        history = get_user_resumes(
-            st.session_state.user_id
+    if st.button(
+        "Login As Admin"
+    ):
+
+        user = login_user(
+            email,
+            password
         )
 
-        st.dataframe(
-            history,
-            use_container_width=True
-        )
+        if user:
+
+            if user[4] == "admin":
+
+                st.session_state.logged_in = True
+                st.session_state.user_id = user[0]
+                st.session_state.user_name = user[1]
+                st.session_state.role = "admin"
+
+                st.rerun()
+
+            else:
+
+                st.error(
+                    "Not An Admin Account"
+                )
+
+# UPLOAD RESUME
+
+elif page == "Upload Resume":
+
+    st.title("📄 Upload Resume")
+
+    uploaded_file = st.file_uploader(
+        "Upload Resume",
+        type=["pdf"]
+    )
+
+    if uploaded_file:
+
+        max_size = 10 * 1024 * 1024
+
+        if uploaded_file.size > max_size:
+
+            st.error(
+                "Maximum file size is 10 MB"
+            )
+
+        else:
+
+            if st.button(
+                "Upload Resume"
+            ):
+
+                filepath = save_resume(
+                    st.session_state.user_id,
+                    uploaded_file
+                )
+
+                st.success(
+                    "Resume Uploaded Successfully"
+                )
+
+                text = extract_text_from_pdf(
+                    filepath
+                )
+
+                parsed = parse_resume(
+                    text
+                )
+
+                st.subheader(
+                    "Resume Details"
+                )
+
+                st.write(
+                    f"Name: {parsed['name']}"
+                )
+
+                st.write(
+                    f"Email: {parsed['email']}"
+                )
+
+                st.write(
+                    f"Phone: {parsed['phone']}"
+                )
+
+                st.write(
+                    parsed["skills"]
+                )
+
+# DASHBOARD
+
+elif page == "Dashboard":
+
+    show_admin_dashboard()
+
+# LOGOUT
+
+elif page == "Logout":
+
+    st.session_state.logged_in = False
+    st.session_state.user_id = None
+    st.session_state.user_name = ""
+    st.session_state.role = "guest"
+
+    st.rerun()

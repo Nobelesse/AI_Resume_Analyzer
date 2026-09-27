@@ -1,7 +1,9 @@
 import sqlite3
 from pathlib import Path
 
-DB_PATH = Path("database/resume_analyzer.db")
+DB_PATH = Path(
+    "database/resume_analyzer.db"
+)
 
 
 def get_connection():
@@ -11,11 +13,11 @@ def get_connection():
 def initialize_database():
 
     conn = get_connection()
+
     cursor = conn.cursor()
 
-    # Users Table
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS users (
+    CREATE TABLE IF NOT EXISTS users(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         email TEXT UNIQUE NOT NULL,
@@ -25,35 +27,47 @@ def initialize_database():
     )
     """)
 
-    # Resumes Table
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS resumes (
+    CREATE TABLE IF NOT EXISTS resumes(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
         resume_name TEXT,
         file_path TEXT,
-        upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user_id) REFERENCES users(id)
+        upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
 
-    # Analyses Table
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS analyses (
+    CREATE TABLE IF NOT EXISTS parsed_resumes(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        name TEXT,
+        email TEXT,
+        phone TEXT,
+        skills TEXT
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS analyses(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
         ats_score REAL,
         match_score REAL,
         target_job TEXT,
-        analysis_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user_id) REFERENCES users(id)
+        analysis_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
 
     conn.commit()
+
     conn.close()
 
 
 if __name__ == "__main__":
+
     initialize_database()
-    print("Database Initialized Successfully")
+
+    print(
+        "Database Initialized Successfully"
+    )
